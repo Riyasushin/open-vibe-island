@@ -240,17 +240,27 @@ struct PiIntegrationTests {
     }
 
     @Test(arguments: [AgentTool.pi, .ohMyPi])
-    func heartbeatRepairsRestoredRemoteIdentityWithoutResettingActivity(tool: AgentTool) throws {
+    func heartbeatRepairsRemoteTerminalWithoutResettingActivity(tool: AgentTool) throws {
         let timestamp = Date(timeIntervalSince1970: 100_000)
         var state = SessionState()
         let started = SessionStarted(
             sessionID: "restored-session", title: "Working", tool: tool,
-            origin: .live, initialPhase: .running, summary: "Running tool", timestamp: timestamp
+            origin: .live, initialPhase: .running, summary: "Running tool", timestamp: timestamp,
+            jumpTarget: JumpTarget(
+                terminalApp: "VS Code", workspaceName: "project", paneTitle: "OMP",
+                workingDirectory: "/home/user/project", tmuxTarget: "%42",
+                vscodeTerminalURI: "vscode://open-island.terminal-jump/focus?token=previous"
+            )
         )
         state.apply(.sessionStarted(started))
         var recovery = started
         recovery.isRemote = true
         recovery.initialPhase = .completed
+        let uri = "vscode://open-island.terminal-jump/focus?token=registered&windowId=7"
+        recovery.jumpTarget = JumpTarget(
+            terminalApp: "VS Code", workspaceName: "project", paneTitle: "OMP",
+            vscodeTerminalURI: uri
+        )
         state.apply(.sessionHeartbeat(SessionHeartbeat(
             sessionID: started.sessionID, timestamp: timestamp.addingTimeInterval(15), recoverySession: recovery
         )))
@@ -259,11 +269,18 @@ struct PiIntegrationTests {
         #expect(repaired.phase == .running)
         #expect(repaired.summary == "Running tool")
         #expect(repaired.firstSeenAt == timestamp)
+        #expect(repaired.updatedAt == timestamp)
+        #expect(repaired.jumpTarget?.vscodeTerminalURI == uri)
+        #expect(repaired.jumpTarget?.tmuxTarget == "%42")
+        #expect(repaired.jumpTarget?.workingDirectory == "/home/user/project")
 
-        // A heartbeat without remote identity must not erase an established origin.
+        // A legacy heartbeat must not erase an established origin or terminal locator.
+        var legacyRecovery = started
+        legacyRecovery.jumpTarget?.vscodeTerminalURI = nil
         state.apply(.sessionHeartbeat(SessionHeartbeat(
-            sessionID: started.sessionID, timestamp: timestamp.addingTimeInterval(30), recoverySession: started
+            sessionID: started.sessionID, timestamp: timestamp.addingTimeInterval(30), recoverySession: legacyRecovery
         )))
         #expect(state.session(id: started.sessionID)?.isRemote == true)
+        #expect(state.session(id: started.sessionID)?.jumpTarget?.vscodeTerminalURI == uri)
     }
 }

@@ -38,6 +38,7 @@ public struct PiHookPayload: Equatable, Codable, Sendable {
     public var terminalTTY: String?
     public var terminalTitle: String?
     public var remote: Bool?
+    public var vscodeTerminalURI: String?
 
     private enum CodingKeys: String, CodingKey {
         case hookEventName = "hook_event_name"
@@ -55,6 +56,7 @@ public struct PiHookPayload: Equatable, Codable, Sendable {
         case terminalTTY = "terminal_tty"
         case terminalTitle = "terminal_title"
         case remote
+        case vscodeTerminalURI = "vscode_terminal_uri"
     }
 
     public init(
@@ -72,7 +74,8 @@ public struct PiHookPayload: Equatable, Codable, Sendable {
         terminalSessionID: String? = nil,
         terminalTTY: String? = nil,
         terminalTitle: String? = nil,
-        remote: Bool? = nil
+        remote: Bool? = nil,
+        vscodeTerminalURI: String? = nil
     ) {
         self.hookEventName = hookEventName
         self.agent = agent
@@ -89,6 +92,7 @@ public struct PiHookPayload: Equatable, Codable, Sendable {
         self.terminalTTY = terminalTTY
         self.terminalTitle = terminalTitle
         self.remote = remote
+        self.vscodeTerminalURI = vscodeTerminalURI
     }
 }
 
@@ -171,7 +175,8 @@ public extension PiHookPayload {
             paneTitle: terminalTitle ?? "\(agent.tool.displayName) \(sessionID.prefix(8))",
             workingDirectory: cwd,
             terminalSessionID: terminalSessionID,
-            terminalTTY: terminalTTY
+            terminalTTY: terminalTTY,
+            vscodeTerminalURI: vscodeTerminalURI
         )
     }
 

@@ -170,7 +170,7 @@ export OPEN_ISLAND_SOCKET_PATH=/tmp/open-island-remote.sock
 
 ## Pi and Oh My Pi (OMP)
 
-Use an Open Island build containing Pi/OMP remote recognition and reinstall the extension from **Settings → Setup → CLI Hooks**. Managed extension version 4 detects non-empty `SSH_CONNECTION`, `SSH_CLIENT`, or `SSH_TTY` and sends the existing `remote` flag. The app shows the SSH badge and preserves remote identity across heartbeat recovery and registry restore. Updating only the extension does not add remote recognition to older app builds, including 1.2.1.
+Use an Open Island build containing Pi/OMP remote recognition and reinstall the extension from **Settings → Setup → CLI Hooks**. Managed extension version 5 detects non-empty `SSH_CONNECTION`, `SSH_CLIENT`, or `SSH_TTY`, and also recognizes Remote-SSH through the VS Code companion below. The app shows the SSH badge and preserves remote identity across heartbeat recovery and registry restore. Updating only the extension does not add remote recognition or precise terminal jumps to older app builds, including 1.2.1.
 
 For OMP, copy the installed extension to the remote machine:
 
@@ -200,4 +200,21 @@ Keep the SSH tunnel open and restart existing Pi/OMP sessions after installing o
 
 If reconnecting fails because the socket already exists, follow the sshd `StreamLocalBindUnlink` guidance above or remove only the known stale socket after confirming its listener is disconnected. Never remove a live socket.
 
-This transports live status, not historical session files. Remote identity does not provide a local terminal-tab mapping or precise remote tmux jump-back.
+This transports live status, not historical session files. The SSH flag alone does not provide a local terminal-tab mapping or precise remote tmux jump-back.
+
+### Exact VS Code Remote-SSH terminal jump
+
+Build the dependency-free companion from this checkout:
+
+```bash
+cd vscode-terminal-jump
+npx --yes @vscode/vsce package --allow-missing-repository --skip-license --out ../open-island-terminal-jump.vsix
+```
+
+Install the VSIX into the **SSH remote** extension host using **Extensions: Install from VSIX** in the Remote-SSH window, or run `code --install-extension /path/to/open-island-terminal-jump.vsix` in that window's remote terminal. The extension ID is `open-island.terminal-jump`; it is a locally built companion, not a Marketplace dependency.
+
+Use the patched Mac app and managed Pi/OMP extension version 5 together. Reload the agent extensions with `/reload` while idle, or restart the agent. Existing VS Code terminals do not need recreation. The companion registers their shell process IDs in private `~/.cache/open-island/vscode-terminals` files; the agent matches its process ancestry and reports the window-routed URI. Heartbeats update that locator without resetting task state. Records refresh every 15 seconds and the agent rejects records older than 45 seconds.
+
+Clicking the island item asks VS Code to focus the exact existing terminal, even when several terminals share a directory. No SSH login, terminal creation, shell input, or Accessibility permission is used for this jump. A closed terminal or expired window token is reported as stale rather than selecting a different terminal. Reloading/reconnecting the VS Code window refreshes routing on subsequent heartbeats. Check the **Open Island Terminal Jump** output channel for focus results.
+
+Without the companion, existing workspace-level jumping remains best-effort; exact tmux pane selection inside a remote VS Code terminal is not provided.
