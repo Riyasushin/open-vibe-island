@@ -252,6 +252,9 @@ public struct SessionState: Equatable, Sendable {
             session.processNotSeenCount = 0
             session.lastHeartbeatAt = payload.timestamp
             session.heartbeatReconnectStartedAt = nil
+            // Repair records saved before remote identity was persisted without
+            // letting a legacy extension clear an already-known remote origin.
+            session.isRemote = session.isRemote || payload.recoverySession?.isRemote == true
             upsert(session)
 
         case let .actionableStateResolved(payload):

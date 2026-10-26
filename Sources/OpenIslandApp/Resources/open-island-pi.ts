@@ -176,6 +176,7 @@ export default function openIslandPiExtension(pi: ExtensionAPICompat) {
       agent: AGENT_SOURCE,
       session_id: `${SESSION_PREFIX}-${rawID}`,
       cwd: ctx.cwd || process.cwd(),
+      remote: Boolean(process.env.SSH_CONNECTION || process.env.SSH_CLIENT || process.env.SSH_TTY),
       model,
       transcript_path: sessionManager?.getSessionFile?.(),
       ...terminalFields(),

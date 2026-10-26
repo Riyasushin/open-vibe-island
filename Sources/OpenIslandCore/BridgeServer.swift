@@ -2289,7 +2289,8 @@ public final class BridgeServer: @unchecked Sendable {
             summary: payload.implicitStartSummary,
             timestamp: .now,
             jumpTarget: payload.defaultJumpTarget,
-            piMetadata: payload.defaultPiMetadata.isEmpty ? nil : payload.defaultPiMetadata
+            piMetadata: payload.defaultPiMetadata.isEmpty ? nil : payload.defaultPiMetadata,
+            isRemote: payload.remote == true
         )
     }
 
